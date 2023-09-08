@@ -1,0 +1,65 @@
+1. Melakukan instalasi POX Controller 
+Command : 
+- sudo apt-get update = memperbaharui daftar paket pada sistem operasi 
+- sudo apt-get install git = melakukan clone terhadap repositori pox 
+- git clone https:github.com/noxrepo/pox.git 
+2. Melakukan instalasi bahasa pemograman Python 
+command :
+- sudo apt install python3 
+- python3 -version 
+3. Melakukan instalasi Open vSwitch 
+- sudo apt-get update 
+- sudo apt-get install openvswitch-switch
+4. Mengaktifkan Open vSwitch 
+command :
+- /etc/init.d/openvswitch-switch enable
+- /etc/init.d/openvswitch-switch status
+5. Melakukan instalasi bridge 
+command :
+- sudo apt install bridge-utils 
+6. Menghubungkan POX Controller dan Open vSwitch 
+command :
+- sudo ovs-vsctl add-br <nama bridge>
+- sudo ovs-vsctl show = untuk melakukan pengecekan terhadap bridge yang sudah didaftar 
+- sudo ovs-vsctl set-controller <nama bridge> tcp:<alamat ip adddress POX>:<port POX>
+- sudo ovs-vsctl del-br <nama bridge>
+7. Menjalankan modul POX 
+command :
+(contoh modulnya adalah modul L2 Learning)
+- ./pox.py openflow.discovery forwarding.l2_learning
+8. Mendaftarkan identitas masing - masing host 
+command :
+- cd /etc/netplan 
+- sudo nano 00-installer-conifg.yaml
+- masukkan konfigurasi sesuai ketentuan topologi dan juga vmnet di masing - masing host  
+- sudo reboot 
+9. mendaftarkan vlan ID dari setiap host ke OVS
+command :
+- sudo ovs-vsctl add-port br0 ens37 tag=10
+- sudo ovs-vsctl add-port br0 ens38 tag=20
+- sudo ovs-vsctl add-port br0 ens39 tag=30
+- sudo ovs-vsctl add-port br0 vlan10 tag=10 -- set interface vlan10 type=internal
+- sudo ovs-vsctl add-port br0 vlan20 tag=20 -- set interface vlan20 type=internal
+- sudo ovs-vsctl add-port br0 vlan30 tag=30 -- set interface vlan30 type=internal
+10. masuk ke konfigurasi 
+command :
+- sudo nano /etc/sysctl.conf
+- pada baris #net.ipv4.ip_forward=1 hapus tanda pagarnya = untuk mengaktifkan pengalihan IP (IP Forwarding) jadi antar interface dapat saling melakukan komunikasi 
+11. lakukan pengecekan menggunakan ifconfig 
+12. Pembuatan rules firewall
+command :
+- masuk ke direktori POX
+- buat modul menggunakan perintah sudo nano firewall.py 
+- buat modul port dengan menggunakan perintah sudo nano port.py 
+13. Menjalankan rules firewall dan port 
+command :
+- ./pox.py log.level --DEBUG <nama modul> --> menjalankan modul rules yang sudah dibuat 
+14. Lakukan pengecekan PING antar host 
+
+Pengujian command pada arsitektur :
+1. sudo ovs-ofctl show <nama bridge> --> melihat identitas detail dari host yang terdaftar pada vswitch 
+2. sudo ovs-ofctl dump-flows <nama bridge> --> melakukan pengecekan terhadap isi flow table Open vSwitch 
+3. sudo ovs-ofctl add-flow <nama bridge> <komponen yang ingin ditambahkan> --> penambahan flow table yang ingin ditentukan 
+4. sudo ovs-ofctl delflows <nama bridge> <komponen flow table yang ingin dihapus>
+5. ./pox.py openflow.discovery forwarding.<nama modul> --> menjalankan modul yang tersedia di direktori POX Controller
+6. sudo tshark -i <nama interface> --> melakukan pemantauan terhadap komunikasi yang terjadi di interface tersebut

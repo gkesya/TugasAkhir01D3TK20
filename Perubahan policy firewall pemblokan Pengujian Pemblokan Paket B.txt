@@ -1,0 +1,11 @@
+def handle_packet(event): 
+packet = event.parsed
+
+# Melakukan filtering berdasarkan alamat IP 
+if packet.find('ipv4'):
+ip_packet = packet.find('ipv4') 
+src_ip = ip_packet.srcip
+dst_ip = ip_packet.dstip
+
+# Mengeset alamat IP Host B 
+host_b_ip = '172.20.12.7’

@@ -1,0 +1,29 @@
+from pox.core import core
+import pox.openflow.libopenflow_01 as of
+
+# Inisialisasi Pox Controller
+def _handle_ConnectionUp(event):
+    # Mendapatkan koneksi ke switch
+    connection = event.connection
+
+    # Mengatur aturan blokir pada switch
+    blocked_port = 80  # Port yang akan diblokir
+    ip_host_a = "172.20.11.6"  # IP Host A
+    vlan_id = 10  # VLAN ID VMnet1
+
+    # Membuat objek aturan OpenFlow
+    flow_mod = of.ofp_flow_mod()
+    flow_mod.match.dl_vlan = vlan_id  # VLAN ID
+    flow_mod.match.dl_vlan_pcp = 0  # Prioritas VLAN
+    flow_mod.match.dl_type = 0x800  # IP paket
+    flow_mod.match.nw_dst = ip_host_a  # IP tujuan
+    flow_mod.match.tp_src = blocked_port  # Port asal
+    flow_mod.hard_timeout = 0  # Tanpa waktu habis
+    flow_mod.actions.append(of.ofp_action_output(port=of.OFPP_NONE))  # Mengirim ke port tak valid
+
+    # Mengirim perintah aturan ke switch
+    connection.send(flow_mod)
+
+def launch():
+    # Mendaftarkan fungsi _handle_ConnectionUp untuk event ConnectionUp
+    core.openflow.addListenerByName("ConnectionUp", _handle_ConnectionUp)

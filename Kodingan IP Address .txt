@@ -1,0 +1,29 @@
+import pprint
+from pox.core import core
+import pox.openflow.libopenflow_01 as of
+
+# Mendaftarkan modul sebagai komponen POX
+core.openflow.addListenerByName("PacketIn", lambda _: handle_packet(_))
+
+def handle_packet(event):
+    packet = event.parsed
+
+    # Melakukan filtering berdasarkan alamat IP
+    if packet.find('ipv4'):
+        ip_packet = packet.find('ipv4')
+        src_ip = ip_packet.srcip
+        dst_ip = ip_packet.dstip
+
+        # Mengeset alamat IP Host B
+        host_b_ip = '172.20.12.7'
+
+        # Mengecek jika paket berasal dari Host B dan ditujukan ke Host lain
+        if src_ip == host_b_ip:
+            # Mencegah paket ICMP (ping) yang dikirim dari Host B ke Host lain
+            if packet.find('icmp'):
+                msg = of.ofp_flow_mod()
+                msg.match = of.ofp_match(dl_type=0x800, nw_proto=1, nw_src=host_b_ip)
+
+                # Menentukan tindakan yang akan diambil (misalnya DROP)
+                msg.actions.append(of.ofp_action_output(port=of.OFPP_NONE))
+                event.connection.send(msg)
